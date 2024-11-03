@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import *
+from statistics_operator.models import *
 
 class CustomerSerializer(serializers.ModelSerializer):
 

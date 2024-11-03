@@ -1,5 +1,5 @@
-from .models import *
-from .serializers import *
+from statistics_operator.models import *
+from statistics_operator.serializers import *
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -123,10 +123,11 @@ class PurchaseViewSet(viewsets.ModelViewSet):
 
         if status:
             queryset = queryset.filter(status=status)
-
         if start_date:
+            start_date = timezone.make_aware(datetime.strptime(start_date, '%Y-%m-%d'))
             queryset = queryset.filter(purchase_date__gte=start_date)
         if end_date:
+            end_date = timezone.make_aware(datetime.strptime(end_date, '%Y-%m-%d'))
             queryset = queryset.filter(purchase_date__lte=end_date)
 
         return queryset
@@ -135,7 +136,10 @@ class PurchaseViewSet(viewsets.ModelViewSet):
     def current_month(self, request):
         current_month = timezone.now().month
         current_year = timezone.now().year
-        purchases = Purchase.objects.filter(purchase_date__month=current_month, purchase_date__year=current_year)
+        purchases = Purchase.objects.filter(
+            purchase_date__month=current_month,
+            purchase_date__year=current_year
+        )
         serializer = self.get_serializer(purchases, many=True)
         return Response(serializer.data)
 
@@ -144,12 +148,14 @@ class PurchaseViewSet(viewsets.ModelViewSet):
         month = request.query_params.get('month')
         year = request.query_params.get('year', timezone.now().year)
 
-        if month:
+        try:
+            month = int(month)
+            year = int(year)
             purchases = Purchase.objects.filter(purchase_date__month=month, purchase_date__year=year)
             serializer = self.get_serializer(purchases, many=True)
             return Response(serializer.data)
-        else:
-            return Response({"error": "Month parameter is required"}, status=status.HTTP_400_BAD_REQUEST)
+        except (ValueError, TypeError):
+            return Response({"error": "Invalid month or year. Ensure they are integers."}, status=status.HTTP_400_BAD_REQUEST)
 
     @action(detail=False, methods=['get'])
     def by_date(self, request):
@@ -157,6 +163,7 @@ class PurchaseViewSet(viewsets.ModelViewSet):
         if date_str:
             try:
                 date = datetime.strptime(date_str, '%Y-%m-%d').date()
+                date = timezone.make_aware(datetime.combine(date, datetime.min.time()))
                 purchases = Purchase.objects.filter(purchase_date__date=date)
                 serializer = self.get_serializer(purchases, many=True)
                 return Response(serializer.data)
@@ -171,6 +178,7 @@ class PurchaseSummaryView(viewsets.ModelViewSet):
 
     def get_previous_quarter_dates(self):
         now = timezone.now()
+        current_month = now.month
         
         if current_month in [1, 2, 3]:
             start_date = make_aware(datetime(now.year - 1, 10, 1))   
@@ -194,8 +202,7 @@ class PurchaseSummaryView(viewsets.ModelViewSet):
             purchase_date__range=(start_date, end_date),
             status='delivered'
         ).values('book_title').annotate(total=Count('purchase_id')).order_by('-total').first()
-
-        print(f"Top book found: {top_book}")   
+ 
         return top_book
 
     # Total sales for current quate/last_quater/special date/this month/date range/today

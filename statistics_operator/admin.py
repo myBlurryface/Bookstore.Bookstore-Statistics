@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Customer, Purchase
+from statistics_operator.models import Customer, Purchase
 
 
 @admin.register(Customer)
