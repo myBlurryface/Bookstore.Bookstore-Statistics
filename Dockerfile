@@ -1,5 +1,5 @@
 # Using base python
-FROM python:3.12-slim
+FROM python:3.11
 
 # Install dependencies for compiling packages
 RUN apt-get update && apt-get install -y \
@@ -19,5 +19,5 @@ RUN pip install --upgrade pip && pip install -r requirements.txt
 # Expose the working port
 EXPOSE 8000
 
-CMD ['python' 'manage.py' 'migrate']
-CMD ['python' 'manage.py' 'runserver']
+CMD ["python", "manage.py", "migrate"]
+CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]

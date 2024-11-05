@@ -7,24 +7,27 @@ services:
       - postgres_data:/var/lib/postgresql/data
     networks:
       - bookstore_statistics_network
+      - bookstore-network
 
   web:
-    build: . 
-    command: python manage.py runserver 0.0.0.0:8000
+    build: .
+    command: bash -c "python manage.py migrate && python manage.py consume_bookstore_data && python manage.py runserver 0.0.0.0:8001" 
     volumes:
       - .:/app
     ports:
-      - "8000:8000"
+      - "8001:8001"
     depends_on:
       - db
     env_file:
       - .env
     networks:
       - bookstore_statistics_network
+      - bookstore-network
 
 networks:
   bookstore_statistics_network:
+  bookstore-network:
+    external: true 
 
 volumes:
   postgres_data:
-
