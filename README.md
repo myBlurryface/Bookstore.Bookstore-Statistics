@@ -1,4 +1,4 @@
-**Bookstore-Statisrics API app**
+**Bookstore-Statistics API app**
 ```markdown
 Bookstore-Statistics - второй микросервис для Bookstore app. (запускать только после первого микросервиса) 
 Первый микросервис: https://github.com/myBlurryface/Bookstore.Books-operator/tree/master 
