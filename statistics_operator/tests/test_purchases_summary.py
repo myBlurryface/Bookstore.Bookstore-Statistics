@@ -1,7 +1,7 @@
 from rest_framework import status
 from rest_framework.test import APITestCase, APIClient
 from rest_framework_simplejwt.tokens import AccessToken
-from statistics_operator.models import Customer, Purchase, User
+from statistics_operator.models import OrderItemData, Customer, Purchase, User
 from datetime import datetime, timedelta
 from django.utils import timezone
 
@@ -15,57 +15,75 @@ class PurchaseStatsViewTests(APITestCase):
         self.customer = Customer.objects.create(username='user1', total_spent=100.00, date_joined='2022-01-01')
 
         self.purchase1 = Purchase.objects.create(
+            purchase_id=1,
             customer=self.customer,
-            book_id=1,
-            book_title='Book One',
             status='delivered',
             purchase_price=10.00,
-            purchase_date=timezone.make_aware(datetime(2024, 11, 1, 10, 0, 0))  
+            purchase_date=timezone.make_aware(datetime(2024, 11, 1, 10, 0, 0))
         )
         self.purchase2 = Purchase.objects.create(
+            purchase_id=2,
             customer=self.customer,
-            book_id=2,
-            book_title='Book Two',
             status='delivered',
             purchase_price=15.00,
             purchase_date=timezone.make_aware(datetime(2024, 11, 1, 15, 0, 0))
         )
-
         self.purchase3 = Purchase.objects.create(
+            purchase_id=3,
             customer=self.customer,
-            book_id=1,
-            book_title='Book One',
             status='delivered',
             purchase_price=10.00,
-            purchase_date=timezone.make_aware(datetime(2024, 7, 15, 15, 0, 0))   
+            purchase_date=timezone.make_aware(datetime(2024, 7, 15, 15, 0, 0))
         )
         self.purchase4 = Purchase.objects.create(
+            purchase_id=4,
             customer=self.customer,
-            book_id=2,
-            book_title='Book Two',
             status='delivered',
             purchase_price=20.00,
-            purchase_date=timezone.make_aware(datetime(2024, 8, 20, 15, 0, 0))   
+            purchase_date=timezone.make_aware(datetime(2024, 8, 20, 15, 0, 0))
         )
-
         self.purchase5 = Purchase.objects.create(
+            purchase_id=5,
             customer=self.customer,
-            book_id=2,
-            book_title='Book Two',
             status='delivered',
             purchase_price=20.00,
-            purchase_date=timezone.make_aware(datetime(2024, 8, 20, 15, 0, 0))   
+            purchase_date=timezone.make_aware(datetime(2024, 8, 20, 15, 0, 0))
         )
-
         self.purchase6 = Purchase.objects.create(
+            purchase_id=6,
             customer=self.customer,
-            book_id=3,
-            book_title='Book Three',
             status='delivered',
             purchase_price=15.00,
-            purchase_date=timezone.make_aware(datetime(2024, 9, 10, 10, 0, 0))  
+            purchase_date=timezone.make_aware(datetime(2024, 9, 10, 10, 0, 0))
         )
-
+        self.order_item1 = OrderItemData.objects.create(
+            book_id=1,
+            book_title='Book One', 
+            quantity=2,
+            price=10.00,
+            discount=5.00,
+            total_price=19,
+            purchase_date=timezone.make_aware(datetime(2024, 11, 1, 10, 0, 0))
+        )
+        self.order_item2 = OrderItemData.objects.create(
+            book_id=2,
+            book_title='Book Two',
+            quantity=1,
+            price=15.00,
+            discount=0.00,
+            total_price=15.00,
+            purchase_date=timezone.make_aware(datetime(2024, 11, 1, 15, 0, 0))
+        )
+        self.order_item3 = OrderItemData.objects.create(
+            book_id=3,
+            book_title='Book Three',
+            quantity=3,
+            price=12.00,
+            discount=10.00,
+            total_price=26.00,
+            purchase_date=timezone.make_aware(datetime(2024, 7, 15, 15, 0, 0))
+        )
+    
         self.admin_token = str(AccessToken.for_user(self.admin_user))
         self.client = APIClient()
         self.api_authentication()
@@ -105,7 +123,7 @@ class PurchaseStatsViewTests(APITestCase):
         self.assertIn('total_sales', response.data)
         self.assertIn('avg_check', response.data)  
 
-        self.assertEqual(response.data['top_book'], 'Book Two') 
+        self.assertEqual(response.data['top_book'], 'Book Three') 
         self.assertEqual(response.data['total_sales'], 65.00)  
         self.assertEqual(response.data['avg_check'], 16.25)  
 

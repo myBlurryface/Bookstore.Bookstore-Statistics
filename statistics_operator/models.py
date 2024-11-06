@@ -22,10 +22,8 @@ class Purchase(models.Model):
         ('canceled', 'Canceled'),
     ]
 
-    purchase_id = models.AutoField(primary_key=True)
-    customer = models.ForeignKey(Customer, on_delete=models.CASCADE, related_name='purchases')
-    book_id = models.IntegerField()  
-    book_title = models.CharField(max_length=255)   
+    purchase_id = models.IntegerField(primary_key=True)
+    customer = models.ForeignKey(Customer, on_delete=models.CASCADE, related_name='purchases')  
     status = models.CharField(max_length=20, choices=STATUS_CHOICES)
     purchase_date = models.DateTimeField()
     purchase_price = models.DecimalField(max_digits=10, decimal_places=2)  
@@ -35,3 +33,16 @@ class Purchase(models.Model):
 
     class Meta:
         ordering = ['-purchase_date'] 
+
+
+class OrderItemData(models.Model):
+    book_id = models.IntegerField(null=True, blank=True) 
+    book_title = models.CharField(max_length=255, default='Unknown')  
+    quantity = models.PositiveIntegerField()  
+    price = models.DecimalField(max_digits=10, decimal_places=2)  
+    discount = models.DecimalField(max_digits=5, decimal_places=2)  
+    total_price = models.DecimalField(max_digits=10, decimal_places=2)  
+    purchase_date = models.DateTimeField()
+
+    def __str__(self):
+        return f'OrderItemData for Book ID {self.book_id} - {self.book_title}'

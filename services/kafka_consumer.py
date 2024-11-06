@@ -16,9 +16,9 @@ config = {
 }
 
 consumer = Consumer(config)
-consumer.subscribe(['customer_topic', 'order_topic'])
+consumer.subscribe(['customer_topic', 'order_topic','order_items_topic'])
 
-logging.info("Kafka consumer started and subscribed to topics: customer_topic, order_topic")
+logging.info("Kafka consumer started and subscribed to topics: customer_topic, order_topic, order_items_topic")
 
 try:
     while True:
@@ -36,7 +36,6 @@ try:
                 topic = msg.topic()
 
                 if topic == 'customer_topic':
-                    # Обработка сообщений из customer_topic
                     if 'user_action' in data and data['user_action'] in ['create', 'update']:
                         if data['user_action'] == 'create':
                             Customer.objects.create(
@@ -67,25 +66,23 @@ try:
                             logging.warning(f"Customer with ID {customer_id} not found.")
                             continue
 
-                        if data['user_action'] == 'create':
-                            # Создание новой записи в базе данных Purchase
+                        # Create new record    
+                        if data['order_action'] == 'create':
                             purchase = Purchase.objects.create(
-                                customer=customer,
-                                book_id=data.get('book_id'),
-                                book_title=data.get('book_title'),
+                                purchase_id=data.get('order_id'),
+                                customer=data.get('customer_id'),
                                 status=data.get('status', 'pending'),
                                 purchase_date=parse_datetime(data.get('purchase_date')),
                                 purchase_price=data.get('purchase_price')
                             )
                             logging.info(f"Purchase created: {purchase}")
-                        elif data['user_action'] == 'update':
-                            # Обновление существующей записи Purchase
-                            purchase_id = data.get('purchase_id')
+
+                        # Update record
+                        elif data['order_action'] == 'update':
+                            purchase_id = data.get('order_id')
                             purchase = Purchase.objects.filter(purchase_id=purchase_id).first()
 
                             if purchase:
-                                purchase.book_id = data.get('book_id', purchase.book_id)
-                                purchase.book_title = data.get('book_title', purchase.book_title)
                                 purchase.status = data.get('status', purchase.status)
                                 purchase.purchase_date = parse_datetime(data.get('purchase_date')) or purchase.purchase_date
                                 purchase.purchase_price = data.get('purchase_price', purchase.purchase_price)
@@ -93,6 +90,26 @@ try:
                                 logging.info(f"Purchase updated: {purchase}")
                             else:
                                 logging.warning(f"Purchase with ID {purchase_id} not found.")
+                elif topic == 'order_items_topic':
+                    if 'book_id' in data:
+                        try:
+                            purchase_date = parse_datetime(data.get('purchase_date'))
+            
+                            Purchase.objects.create(
+                                book_id=data['book_id'],
+                                book_title=data.get('book_title', 'Unknown'),
+                                quantity=data.get('quantity', 1),
+                                price=data.get('price'),
+                                discount=data.get('discount', 0.00),
+                                total_price=data.get('total_price'),
+                                purchase_date=purchase_date
+                            )
+            
+                            logging.info(f"Order item processed successfully for book ID {data['book_id']}.")
+                        except IntegrityError as e:
+                            logging.error(f"Failed to process order item: {e}")
+                        except Exception as e:
+                            logging.error(f"Unexpected error when processing order item: {e}")
             except json.JSONDecodeError as e:
                 logging.error(f"Failed to decode message: {e}")
 

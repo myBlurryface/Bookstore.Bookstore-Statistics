@@ -65,63 +65,6 @@ class PurchaseViewSet(viewsets.ModelViewSet):
 
         if status:
             queryset = queryset.filter(status=status)
-
-        if start_date:
-            queryset = queryset.filter(purchase_date__gte=start_date)
-        if end_date:
-            queryset = queryset.filter(purchase_date__lte=end_date)
-
-        return queryset
-
-    @action(detail=False, methods=['get'])
-    def current_month(self, request):
-        current_month = timezone.now().month
-        current_year = timezone.now().year
-        purchases = Purchase.objects.filter(purchase_date__month=current_month, purchase_date__year=current_year)
-        serializer = self.get_serializer(purchases, many=True)
-        return Response(serializer.data)
-
-    @action(detail=False, methods=['get'])
-    def by_month(self, request):
-        month = request.query_params.get('month')
-        year = request.query_params.get('year', timezone.now().year)
-
-        if month:
-            purchases = Purchase.objects.filter(purchase_date__month=month, purchase_date__year=year)
-            serializer = self.get_serializer(purchases, many=True)
-            return Response(serializer.data)
-        else:
-            return Response({"error": "Month parameter is required"}, status=status.HTTP_400_BAD_REQUEST)
-
-    @action(detail=False, methods=['get'])
-    def by_date(self, request):
-        date_str = request.query_params.get('date')
-        if date_str:
-            try:
-                date = datetime.strptime(date_str, '%Y-%m-%d').date()
-                purchases = Purchase.objects.filter(purchase_date__date=date)
-                serializer = self.get_serializer(purchases, many=True)
-                return Response(serializer.data)
-            except ValueError:
-                return Response({"error": "Invalid date format. Use YYYY-MM-DD."}, status=status.HTTP_400_BAD_REQUEST)
-        else:
-            return Response({"error": "Date parameter is required."}, status=status.HTTP_400_BAD_REQUEST)
-
-
-class PurchaseViewSet(viewsets.ModelViewSet):
-    queryset = Purchase.objects.all()
-    serializer_class = PurchaseSerializer
-    filter_backends = [filters.OrderingFilter]
-    ordering_fields = ['purchase_date', 'status']
-
-    def get_queryset(self):
-        queryset = super().get_queryset()
-        status = self.request.query_params.get('status')
-        start_date = self.request.query_params.get('start_date')
-        end_date = self.request.query_params.get('end_date')
-
-        if status:
-            queryset = queryset.filter(status=status)
         if start_date:
             start_date = timezone.make_aware(datetime.strptime(start_date, '%Y-%m-%d'))
             queryset = queryset.filter(purchase_date__gte=start_date)
@@ -196,12 +139,12 @@ class PurchaseSummaryView(viewsets.ModelViewSet):
 
     # Top buy book
     def get_top_book(self, start_date, end_date):
+        top_book = OrderItemData.objects.filter(
+            purchase_date__range=(start_date, end_date)
+        ).values('book_title').annotate(
+            total_units=Sum('quantity')
+        ).order_by('-total_units').first() 
 
-        top_book = Purchase.objects.filter(
-            purchase_date__range=(start_date, end_date),
-            status='delivered'
-        ).values('book_title').annotate(total=Count('purchase_id')).order_by('-total').first()
- 
         return top_book
 
     # Total sales for current quate/last_quater/special date/this month/date range/today

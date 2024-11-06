@@ -2,7 +2,7 @@ from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase, APIClient
 from rest_framework_simplejwt.tokens import AccessToken
-from statistics_operator.models import Customer, Purchase, User
+from statistics_operator.models import OrderItemData, Customer, Purchase, User
 from datetime import datetime, timedelta
 from django.utils import timezone
 
@@ -13,6 +13,7 @@ class PurchaseViewSetTests(APITestCase):
         Purchase.objects.all().delete()   
         Customer.objects.all().delete()   
         User.objects.all().delete()       
+        OrderItemData.objects.all().delete()
 
         self.admin_user = User.objects.create_superuser(username='adminuser', password='password')
         self.regular_user = User.objects.create_user(username='regularuser', password='password')
@@ -22,25 +23,22 @@ class PurchaseViewSetTests(APITestCase):
         self.customer3 = Customer.objects.create(username='user3', total_spent=200.00, date_joined='2022-01-03')
 
         self.purchase1 = Purchase.objects.create(
+            purchase_id=1,
             customer=self.customer1,
-            book_id=1,
-            book_title="Book 1",
             status="processed",
             purchase_price=50.00,
             purchase_date=timezone.now() - timedelta(days=1)
         )
         self.purchase2 = Purchase.objects.create(
+            purchase_id=2,
             customer=self.customer2,
-            book_id=2,
-            book_title="Book 2",
             status="pending",
             purchase_price=30.00,
             purchase_date=timezone.now()
         )
         self.purchase3 = Purchase.objects.create(
+            purchase_id=3,
             customer=self.customer3,
-            book_id=3,
-            book_title="Book 3",
             status="delivered",
             purchase_price=100.00,
             purchase_date=timezone.now() - timedelta(days=30)
