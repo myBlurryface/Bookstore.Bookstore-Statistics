@@ -116,7 +116,7 @@ POSTGRES_PASSWORD=admin # Пароль DB
 DB_PORT=5432 # Порт ДБ
 
 # !! Обязательный параметр призапуске из контейнера 
-DB_HOST=bookstore-statistics-db-1
+DB_HOST=bookstorebookstore-statistics-web-1
 
 # При запуске локально   
 DB_HOST="localhost" 
