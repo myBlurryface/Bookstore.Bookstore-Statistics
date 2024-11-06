@@ -1,7 +1,7 @@
 **Bookstore-Statistics API app**
 ```markdown
 Bookstore-Statistics - второй микросервис для Bookstore app. (запускать только после первого микросервиса) 
-Первый микросервис: https://github.com/myBlurryface/Bookstore.Books-operator/tree/master 
+Первый микросервис: https://github.com/myBlurryface/Bookstore.Books-operator/
 
 Это REST API подведения статистики онлайн магазина Bookstore с использованием Django, PostgreSQL, Kafka. 
 Проект поддерживает аутентификацию с использованием JWT и использует Docker для контейнеризации приложения.
